@@ -16,9 +16,10 @@ def get_file(file_id, title):
                private_key = open(path_to_private_key_file).read(),
                service_account_name = service_account_name)
 
-	file = drive_client.get_drive_file(file_id, file_access_token)
+	#file = drive_client.get_drive_file(file_id, file_access_token)
 
-   
+
+#https://github.com/MSF-Jarvis/pydrive-client/blob/master/main.py   
 #http://qaru.site/questions/165781/automating-pydrive-verification-process
 def drive_autorization():
     file_id = 'abc'
@@ -26,7 +27,8 @@ def drive_autorization():
 	# Try to load saved client credentials
 	gauth.LoadCredentialsFile("mycreds.txt")
 	if gauth.credentials is None:
-		gauth.LocalWebserverAuth()
+		#gauth.LocalWebserverAuth()
+		gauth.CommandLineAuth()
 	elif gauth.access_token_expired:
 		gauth.Refresh()
 	else:
@@ -39,7 +41,12 @@ def drive_autorization():
 	textfile.SetContentFile('eng.txt')
 	textfile.Upload()
 	print (textfile)
+	file_id = ''
 	drive.CreateFile({'id':textfile['id']}).GetContentFile('eng-dl.txt')
+	file = self.drive.CreateFile({'id': file_id})
+	file.FetchMetadata()
+	print(file.metadata["mimeType"])
+	print(file.metadata["title"])
    
 if __name__ == '__main__':
    drive_autorization()
