@@ -27,9 +27,13 @@ Python3 должен быть уже установлен.
 pip install -r requirements.txt
 ```
 ### Использование
-Обновляем Google Spreadsheets
+1. обновляем Google Spreadsheets
+
 пример таблицы-
 
+[img]
+
+2. запуск программы - 
 ```
 python3 main.py
 ```
