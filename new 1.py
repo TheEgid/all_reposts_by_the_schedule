@@ -13,16 +13,17 @@ def extract_file_id(text):
       return parse_qsl(_text)[0][1]
   except IndexError:
       return None
+
 	  
-def filter_schedule_row_to_publish(schedule_row, posting_day):
-	non_published = schedule_row[7]
-	if posting_day in schedule_row and non_published == "нет":
+def filter_schedule_row_to_publish(schedule_row, posting_day, non ="нет"):
+	non_published_flag = schedule_row[7]
+	if posting_day in schedule_row and non_published_flag == non:
 		return schedule_row
 	else:
 		return None
 
 
-def choice_new_schedule_row_to_publish(schedule_spreadsheet, posting_day):
+def choice_schedule_row_to_publish(schedule_spreadsheet, posting_day):
 	new_schedule_spreadsheet = []
 	for schedule_row in schedule_spreadsheet:
 	  new_schedule_row = filter_schedule_row_to_publish(schedule_row, posting_day)
@@ -35,6 +36,29 @@ def choice_new_schedule_row_to_publish(schedule_spreadsheet, posting_day):
 def check_spreadsheet():
 	pass
 
-new_schedule_spreadsheet = choice_new_schedule_row_to_publish(schedule_spreadsheet, posting_day='суббота')
+new_schedule_spreadsheet = choice_schedule_row_to_publish(schedule_spreadsheet, posting_day='суббота')
 for row in new_schedule_spreadsheet:
 	print(row)
+	
+
+
+###
+
+s1 = ['нет', 'нет', 'да', 'вторник', 10, '1-gnx8kZnS8FZUd4DaoShb4RPD7D3n8wQxhVMRmUN7BI', '1yKE3DsV3ya0YzTpWDKH4sUxPo_4BMauB', 'нет']	
+	
+def procss(schedule_row):
+	if len(schedule_row) != 8:
+		 return None
+	flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, flag_published = schedule_row
+	moment = [publish_day, publish_time]
+	content = [txt_id, img_id]
+	flags = [flag_vk, flag_tg, flag_fb]
+	return moment, content, flags
+
+print(procss(s1))		
+		
+mm = ['вторник', 10]
+
+
+days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
+print (days[datetime.date.today().weekday()])
