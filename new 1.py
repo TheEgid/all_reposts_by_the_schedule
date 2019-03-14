@@ -43,10 +43,9 @@ for row in new_schedule_spreadsheet:
 	print(row)
 	
 ###
-
 s1 = ['нет', 'нет', 'да', 'вторник', 10, '1-gnx8kZnS8FZUd4DaoShb4RPD7D3n8wQxhVMRmUN7BI', '1yKE3DsV3ya0YzTpWDKH4sUxPo_4BMauB', 'нет']	
 
-def calculate_publish_moment(moment):
+def check_publish_moment(moment):
 	all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3, 'пятница':4, 'суббота':5, 'воскресенье':6}
 	publish_day, publish_time = moment
 	now = datetime.datetime.now()
@@ -54,18 +53,23 @@ def calculate_publish_moment(moment):
 	while future_day.weekday() != all_days[publish_day.lower()]: 
 		future_day += datetime.timedelta(days=1)
 	publish_moment = datetime.datetime.combine(future_day, datetime.time(publish_time))
-	if now >= publish_moment:
-		return None
+	if (now.year == publish_moment.year) and (now.month == publish_moment.month) and (now.day == publish_moment.day) and (now.hour == publish_moment.hour):
+		print('start')
+		return True
 	else:
-		return publish_moment
-	
+		print('рано! '+str(publish_moment)+' '+str(now)+' '+str(future_day.weekday()))
+		return False
+
+		
 def procss(schedule_row):
 	if len(schedule_row) != 8:
-		 return None
+		 pass
 	flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, flag_published = schedule_row
 	moment = [publish_day, publish_time]
 	content = [txt_id, img_id]
 	flags = [flag_vk, flag_tg, flag_fb]
-	return (calculate_publish_moment(moment), content, flags)
+	publish_moment = check_publish_moment(moment)
+	if publish_moment:
+		 print('gogogo')
 
-print(procss(s1))		
+procss(s1)
