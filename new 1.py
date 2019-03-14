@@ -47,7 +47,7 @@ for row in new_schedule_spreadsheet:
 s1 = ['нет', 'нет', 'да', 'вторник', 10, '1-gnx8kZnS8FZUd4DaoShb4RPD7D3n8wQxhVMRmUN7BI', '1yKE3DsV3ya0YzTpWDKH4sUxPo_4BMauB', 'нет']	
 
 def calculate_publish_moment(moment):
-	all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3, 'пятница':4, 'суббота':6, 'воскресенье':7}
+	all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3, 'пятница':4, 'суббота':5, 'воскресенье':6}
 	publish_day, publish_time = moment
 	now = datetime.datetime.now()
 	future_day = datetime.date(now.year, now.month, now.day)
