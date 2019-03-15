@@ -23,7 +23,6 @@ __pycache__/
 *.env
 *.log
 *.txt
-images/
-!requirements.txt
+
 
 >>>>>>> faff12b6ee8caef68ef47db8b3468daf3df2a95e
