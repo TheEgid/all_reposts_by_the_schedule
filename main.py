@@ -4,8 +4,6 @@ import os.path
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from urllib.parse import parse_qsl
-from urlextract import URLExtract
 
 
 def get_spreadsheet_values(spreadsheet_id, range_name):
