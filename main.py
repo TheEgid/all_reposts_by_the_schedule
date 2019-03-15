@@ -6,7 +6,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 
-def get_spreadsheet_values(spreadsheet_id, range_name):
+def get_spreadsheet(spreadsheet_id, range_name):
     creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
@@ -27,15 +27,15 @@ def get_spreadsheet_values(spreadsheet_id, range_name):
     result = sheet.values().get(spreadsheetId=spreadsheet_id,
                                 range=range_name,
                                 valueRenderOption='FORMULA').execute()
-    values = result.get('values', [])
-    if values:
-        return values
-    else:
+    try:
+        return result.get('values', [])
+    except KeyError, ValueError:    
         return None
+
 
 
 if __name__ == '__main__':
     SPREADSHEET_ID = '17r4QRW_m0clut772bRnUL-U1-JiazImiZMm43SkgS9Q'
     RANGE_NAME = 'Лист1!A3:H100000'
-    spreadsheet = get_spreadsheet_values(SPREADSHEET_ID, RANGE_NAME)
+    spreadsheet = get_spreadsheet(SPREADSHEET_ID, RANGE_NAME)
 
