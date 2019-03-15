@@ -9,42 +9,42 @@ schedule_spreadsheet = [['нет', 'да', 'нет', 'пятница', 14, '=HYP
 def extract_file_id(text):
   text= str(text)
   try:
-      _text = URLExtract().find_urls(text)[0]
-      return parse_qsl(_text)[0][1]
+    _text = URLExtract().find_urls(text)[0]
+    return parse_qsl(_text)[0][1]
   except IndexError:
-      return None
+    return None
 
 def check_publish_moment(publish_day, publish_time):
-	all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3, 'пятница':4, 'суббота':5, 'воскресенье':6}
-	now = datetime.datetime.now()
-	future_day = datetime.date(now.year, now.month, now.day)
-	while future_day.weekday() != all_days[publish_day.lower()]: 
-		future_day += datetime.timedelta(days=1)
-	publish_moment = datetime.datetime.combine(future_day, datetime.time(publish_time))
-	if (now.year == publish_moment.year) and (now.month == publish_moment.month) and (now.day == publish_moment.day) and (now.hour == publish_moment.hour):
-		print('start')
-		return True
-	else:
-		print('рано! '+str(publish_moment)+' '+str(now))
-		return False
+  all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3, 'пятница':4, 'суббота':5, 'воскресенье':6}
+  now = datetime.datetime.now()
+  future_day = datetime.date(now.year, now.month, now.day)
+  while future_day.weekday() != all_days[publish_day.lower()]: 
+    future_day += datetime.timedelta(days=1)
+  publish_moment = datetime.datetime.combine(future_day, datetime.time(publish_time))
+  if (now.year == publish_moment.year) and (now.month == publish_moment.month) and (now.day == publish_moment.day) and (now.hour == publish_moment.hour):
+    print('start')
+    return True
+  else:
+    print('рано! '+str(publish_moment)+' '+str(now))
+    return False
 
-		
+    
 def check_spreadsheet(schedule_spreadsheet, non ="нет"):
-	for schedule_row in schedule_spreadsheet:
-		if len(schedule_row) != 8:
-			raise ValueError('Incorrect! Check the schedule spreadsheet!')
-		flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, non_published_flag = schedule_row
-		if non_published_flag.lower() != non:
-			print('уже',non_published_flag)
-			pass
-		else:
-			flags = {'vk':flag_vk, 'tg': flag_tg, 'fb': flag_fb}
-			content = [x if extract_file_id(x) is None else extract_file_id(x) for x in [txt_id, img_id]]
-			publish_moment = check_publish_moment(publish_day, publish_time)
-			if publish_moment:
-				print('gogogo')
-				print(content)
-				print(flags, flags['vk'])
+  for schedule_row in schedule_spreadsheet:
+    if len(schedule_row) != 8:
+      raise ValueError('Incorrect! Check the schedule spreadsheet!')
+    flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, non_published_flag = schedule_row
+    if non_published_flag.lower() != non:
+      print('уже',non_published_flag)
+      pass
+    else:
+      flags = {'vk':flag_vk, 'tg': flag_tg, 'fb': flag_fb}
+      content = [x if extract_file_id(x) is None else extract_file_id(x) for x in [txt_id, img_id]]
+      publish_moment = check_publish_moment(publish_day, publish_time)
+      if publish_moment:
+        print('gogogo')
+        print(content)
+        print(flags, flags['vk'])
 
-			
+      
 check_spreadsheet(schedule_spreadsheet)
