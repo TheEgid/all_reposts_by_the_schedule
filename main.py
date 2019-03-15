@@ -36,19 +36,8 @@ def get_spreadsheet_values(spreadsheet_id, range_name):
         return None
 
 
-def extract_file_id(row, column):
-    _img_url = row[column]
-    _img_url = URLExtract().find_urls(_img_url)[0]
-    return parse_qsl(_img_url)[0][1]
-
-
 if __name__ == '__main__':
     SPREADSHEET_ID = '17r4QRW_m0clut772bRnUL-U1-JiazImiZMm43SkgS9Q'
     RANGE_NAME = 'Лист1!A3:H100000'
     spreadsheet = get_spreadsheet_values(SPREADSHEET_ID, RANGE_NAME)
 
-    txt_column = 5
-    img_column = 6
-    for row in spreadsheet:
-        print(extract_file_id(row, txt_column))
-        print(extract_file_id(row, img_column))
