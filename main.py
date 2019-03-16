@@ -3,11 +3,9 @@ import pickle
 import os.path
 import logging
 import datetime
-
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-
 from services import get_file_metadata_from_gdrive
 from services import save_file
 from services import extract_google_spreadsheet_id
@@ -31,6 +29,7 @@ def get_spreadsheet(link, range_name):
             creds = flow.run_local_server()
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
     service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
 
     sheet = service.spreadsheets()
@@ -56,11 +55,10 @@ def check_publish_moment(publish_day, publish_time):
             (now.month == publish_moment.month) and \
             (now.day == publish_moment.day) and \
             (now.hour == publish_moment.hour):
-        logging.info('It\'s time to publish- '.format(publish_moment))
-        print('start')
+        logging.info('It\'s time to publish - {}'.format(publish_moment))
         return True
     else:
-        logging.info('Still too early - '.format(publish_moment))
+        logging.info('It\'s not a good time - {}'.format(publish_moment))
         return False
 
 
@@ -70,7 +68,6 @@ def check_spreadsheet(schedule_spreadsheet, non="нет"):
             raise ValueError('Incorrect! Check the schedule spreadsheet!')
         flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, non_published_flag = schedule_row
         if non_published_flag.lower() != non:
-            logging.info('Already published - '.format(non_published_flag))
             pass
         else:
             flags = {'vk': flag_vk, 'tg': flag_tg, 'fb': flag_fb}
@@ -83,9 +80,12 @@ def check_spreadsheet(schedule_spreadsheet, non="нет"):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     spreadsheet_link = 'https://docs.google.com/spreadsheets/d/10kRjz6TXNHtlEWaOTgMB0RZ_eLz8I6DZwEo78d9R9Bs/edit#gid=0'
     RANGE_NAME = 'Лист1!A3:H100000'
     spreadsheet = get_spreadsheet(spreadsheet_link, RANGE_NAME)
     #print(spreadsheet)
     check_spreadsheet(spreadsheet)
+
+
 

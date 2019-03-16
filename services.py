@@ -2,6 +2,7 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from urllib.parse import parse_qsl
 from urlextract import URLExtract
+import logging
 import requests
 import os
 import re
@@ -34,7 +35,7 @@ def save_file(url, filename, dir_name='content_folder/'):
     if response.ok:
         with open(filepath, 'wb') as f:
             f.write(response.content)
-            # logging.info('download & saved ' + filename)
+            logging.info('download & saved {}'.format(filepath))
         # make_imageresize(filename, extension)
     else:
         return None
@@ -44,6 +45,7 @@ def save_file(url, filename, dir_name='content_folder/'):
 # http://qaru.site/questions/165781/automating-pydrive-verification-process
 
 def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
+    logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.INFO)
     gauth = GoogleAuth()
     gauth.LoadCredentialsFile(credential_file)
     if gauth.credentials is None:

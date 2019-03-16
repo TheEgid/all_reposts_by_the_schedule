@@ -9,6 +9,7 @@ __pycache__/
 *.txt
 *.json
 *.jpg
+*.log
 content_folder/
 !requirements.txt
 
