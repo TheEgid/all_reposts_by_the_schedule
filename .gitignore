@@ -1,11 +1,9 @@
-<<<<<<< HEAD
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
 *.checkpoint
 *.env
+*.rtf
 *.pickle
 *.log
 *.txt
@@ -14,15 +12,5 @@ __pycache__/
 content_folder/
 !requirements.txt
 
-=======
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-*.env
-*.log
-*.txt
 
 
->>>>>>> faff12b6ee8caef68ef47db8b3468daf3df2a95e
