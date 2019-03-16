@@ -25,8 +25,7 @@ def extract_file_id(text):
         return None
 
 
-# https://github.com/MSF-Jarvis/pydrive-client/blob/master/main.py
-# http://qaru.site/questions/165781/automating-pydrive-verification-process
+
 def save_file(url, filename, dir_name='content_folder/'):
     filepath = dir_name+filename
     if not os.path.exists(dir_name):
@@ -41,7 +40,10 @@ def save_file(url, filename, dir_name='content_folder/'):
         return None
 
 
-def get_file_metadata_from_gdrive(file_id, credential_file="mycreds.txt"):
+# https://github.com/MSF-Jarvis/pydrive-client/blob/master/main.py
+# http://qaru.site/questions/165781/automating-pydrive-verification-process
+
+def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
     gauth = GoogleAuth()
     gauth.LoadCredentialsFile(credential_file)
     if gauth.credentials is None:
