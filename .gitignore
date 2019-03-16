@@ -11,7 +11,7 @@ __pycache__/
 *.txt
 *.json
 *.jpg
-images/
+content_folder/
 !requirements.txt
 
 =======
