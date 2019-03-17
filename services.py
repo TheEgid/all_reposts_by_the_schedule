@@ -15,6 +15,7 @@ def get_args_parser():
                         help='valid commands only: hh, sj, all')
     return parser
 
+
 def create_google_color(r, g, b):
     red = 255-r
     green = 255-g
@@ -46,8 +47,8 @@ def extract_file_id(text):
         return None
 
 
-def save_files(url, filename, dir_name='content_folder/'):
-    filepath = dir_name+filename
+def save_files(url, filename, number, dir_name='content_folder/'):
+    filepath = '{}{}.{}'.format(dir_name, str(number), filename.split('.')[1])
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     response = requests.get(url)
@@ -69,22 +70,20 @@ def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
     gauth.SaveCredentialsFile(credential_file)
     drive = GoogleDrive(gauth)
     my_file = drive.CreateFile({'id': file_id})
-    my_file.FetchMetadata()
-    if my_file.metadata['mimeType'] == 'application/vnd.google-apps.document':
-        metadata_dict = {
-            'file_link': my_file.metadata['exportLinks']['text/plain'],
-            'file_title': '{}.txt'.format(my_file.metadata['title'])
-        }
-    elif my_file.metadata['mimeType'] == 'image/jpeg':
-        metadata_dict = {
-            'file_link': my_file.metadata['webContentLink'],
-            'file_title': my_file.metadata['title']
-        }
-    else:
+    if not file_id:
         return None
-    return metadata_dict
-
-
-
-
-
+    else:
+        my_file.FetchMetadata()
+        if my_file.metadata['mimeType'] == 'application/vnd.google-apps.document':
+            metadata_dict = {
+                'file_link': my_file.metadata['exportLinks']['text/plain'],
+                'file_title': '{}.txt'.format(my_file.metadata['title'])
+            }
+        elif my_file.metadata['mimeType'] == 'image/jpeg':
+            metadata_dict = {
+                'file_link': my_file.metadata['webContentLink'],
+                'file_title': my_file.metadata['title']
+            }
+        else:
+            return None
+        return metadata_dict

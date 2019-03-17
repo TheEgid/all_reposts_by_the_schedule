@@ -1,5 +1,6 @@
 from __future__ import print_function
 import pickle
+import glob
 import os.path
 import logging
 import datetime
@@ -15,9 +16,11 @@ from services import save_files
 from services import extract_google_spreadsheet_id
 from services import extract_file_id
 from services import create_google_color
+from publisher import post_telegram
+from publisher import post_facebook
+from publisher import post_vkontakte
 
 
-logging.basicConfig(level=logging.INFO)
 load_dotenv()
 SHEETS_LINK = os.getenv("SHEETS_LINK")
 SHEETS_RANGE = os.getenv("SHEETS_RANGE")
@@ -30,7 +33,33 @@ TOKEN_TG = os.getenv("TOKEN_TG")
 CHANNEL_TG = os.getenv("CHANNEL_TG")
 TOKEN_FB = os.getenv("TOKEN_FB")
 GROUP_ID_FB = os.getenv("GROUP_ID_FB")
+
+logging.basicConfig(level=logging.INFO)
 activate_job = Flask(__name__)
+
+
+def post_all(file_number, flags):
+    if flags['vk'] == 'да':
+        post_vkontakte(login=LOGIN_VK,
+                       password=PASSWORD_VK,
+                       token=TOKEN_VK,
+                       vk_group=GROUP_ID_VK,
+                       vk_group_album=GROUP_ID_ALBUM_VK,
+                       file_number=file_number)
+    else:
+        pass
+    if flags['tg'] == 'да':
+        post_telegram(token=TOKEN_TG,
+                      tg_channel=CHANNEL_TG,
+                      file_number=file_number)
+    else:
+        pass
+    if flags['fb'] == 'да':
+        post_facebook(token=TOKEN_FB,
+                      fb_group=GROUP_ID_FB,
+                      file_number=file_number)
+    else:
+        pass
 
 
 def interact_spreadsheet(link, range, mode='read', cell_address=None):
@@ -112,11 +141,16 @@ def check_spreadsheet():
             if publish_moment:
                 content_list = list(map(get_file_metadata_from_gdrive, all_content))
                 for x in content_list:
-                    save_files(x['file_link'], x['file_title'])
+                    if x is not None:
+                        save_files(x['file_link'], x['file_title'], row_counter)
 
+                post_all(row_counter, flags)
                 cell_address = (row_counter, last_column)
                 interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
                                      mode='write', cell_address=cell_address)
+                for new_file in glob.glob('content_folder/*'):
+                    os.remove(new_file)
+
                 logging.info('Update sheets in cell {}'.format(cell_address))
     return 'OK'
 
@@ -139,8 +173,4 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-    #check_spreadsheet()
-
-    #print('https://docs.google.com/spreadsheets/d/1vX-iA5gAls4K1gYOCYasKXidAQ7vcCgkpgKbZi9OUk0/edit#gid=0')
 

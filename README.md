@@ -43,7 +43,7 @@ pip install -r requirements.txt
 
 ![](https://www.radikal.kz/images/2019/03/16/BEZYMYNNYI.png)
 
-2. запуск программы - 
+2. запуск программы:
 
 ```
 python3 main.py
