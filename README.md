@@ -8,11 +8,18 @@
 
 Программа рассчитана для установки на постоянно работающем сервере.
 
-Скачиваем файлы в папку all_reposts_by_the_schedule. В этой же папке создаем .env файл. Ваш .env должен содержать строки:
+1. Следуя инструкции из https://developers.google.com/sheets/api/quickstart/python
+создаем API проект Google Spreadsheets. 
+**Enable the Google Sheets API**
+**Download Client Configuration**
+Сохранеям файл .json в папку all_reposts_by_the_schedule как client_secrets.json
+2. Создаем API проект Google Drive по ссылке https://console.developers.google.com/iam-admin/projects
+
+3. Скачиваем файлы в папку all_reposts_by_the_schedule. В этой же папке создаем .env файл. Ваш .env должен содержать строки:
 
 ```
-SHEETS_LINK = url_google_spreadsheets 
-SHEETS_RANGE = диапазон_данных_url_google_spreadsheets #например: Лист1!A3:H100000 
+SHEETS_LINK = url_адрес_вашей_таблицы
+SHEETS_RANGE = ваш_диапазон_данных_таблицы #например: Лист1!A3:H100000 
 LOGIN_VK = ваш_логин_в_контакте
 PASSWORD_VK = ваш_пароль_в_контакте
 TOKEN_VK = токен_вашего приложения_в_контакте
@@ -30,7 +37,7 @@ Python3 должен быть уже установлен.
 pip install -r requirements.txt
 ```
 ### Использование
-1. Программа управляется через таблицу Google Spreadsheets. После постинга обновляется пометка **Опубликовано?**
+1. Программа управляется через таблицу Google Spreadsheets. После постинга обновляется значения столбца **Опубликовано?**
 
 Формат таблицы-
 
@@ -41,7 +48,12 @@ pip install -r requirements.txt
 ```
 python3 main.py
 ```
-Программа выводит в консоль лог своей работы. 
+В начале работы программе необходимо 2 авторизации в API.
+
+![](https://www.radikal.kz/images/2019/03/17/NOVYI-TOCECNYI-RISUNOK.png)
+
+
+Программа выводит в консоль лог своей работы:
 
 ```
 INFO:googleapiclient.discovery:URL being requested: GET https://www.googleapis.com/drive=json
