@@ -3,10 +3,13 @@ import pickle
 import os.path
 import logging
 import datetime
+import threading
+import time
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+from flask import Flask
 from services import get_file_metadata_from_gdrive
 from services import save_files
 from services import extract_google_spreadsheet_id
@@ -14,7 +17,23 @@ from services import extract_file_id
 from services import create_google_color
 
 
-def interact_spreadsheet(link, range, mode='read', updatedcell=None):
+logging.basicConfig(level=logging.INFO)
+load_dotenv()
+SHEETS_LINK = os.getenv("SHEETS_LINK")
+SHEETS_RANGE = os.getenv("SHEETS_RANGE")
+LOGIN_VK = os.getenv("LOGIN_VK")
+PASSWORD_VK = os.getenv("PASSWORD_VK")
+TOKEN_VK = os.getenv("TOKEN_VK")
+GROUP_ID_VK = os.getenv("GROUP_ID_VK")
+GROUP_ID_ALBUM_VK = os.getenv("GROUP_ID_ALBUM_VK")
+TOKEN_TG = os.getenv("TOKEN_TG")
+CHANNEL_TG = os.getenv("CHANNEL_TG")
+TOKEN_FB = os.getenv("TOKEN_FB")
+GROUP_ID_FB = os.getenv("GROUP_ID_FB")
+activate_job = Flask(__name__)
+
+
+def interact_spreadsheet(link, range, mode='read', cell_address=None):
     spreadsheet_id = extract_google_spreadsheet_id(link)
     creds = None
     if os.path.exists('token.pickle'):
@@ -38,8 +57,8 @@ def interact_spreadsheet(link, range, mode='read', updatedcell=None):
                                     valueRenderOption='FORMULA').execute()
         return result.get('values', [])
 
-    elif mode == 'write':
-        row, column = updatedcell
+    if mode == 'write':
+        row, column = cell_address
         service = build('sheets', 'v4', credentials=creds)
         requests = [{'repeatCell': {
             'range': {'sheetId': 0, 'startRowIndex': row-1, 'endRowIndex': row,
@@ -65,16 +84,16 @@ def check_publish_moment(publish_day, publish_time):
             (now.month == publish_moment.month) and \
             (now.day == publish_moment.day) and \
             (now.hour == publish_moment.hour):
-        logging.info('It\'s time to publish - {}'.format(publish_moment))
+        logging.info('It\'s date & time to publish - {}'.format(publish_moment))
         return True
     else:
-        logging.info('It\'s not a good time - {}'.format(publish_moment))
+        logging.info('It\'s not a good date & time - {}'.format(publish_moment))
         return False
 
 
 def check_spreadsheet():
     schedule_spreadsheet = interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
-                                                mode='read', updatedcell=None)
+                                                mode='read', cell_address=None)
     row_counter = 2
     last_column = 8
     for schedule_row in schedule_spreadsheet:
@@ -95,30 +114,33 @@ def check_spreadsheet():
                 for x in content_list:
                     save_files(x['file_link'], x['file_title'])
 
-                updatedcell = (row_counter, last_column)
+                cell_address = (row_counter, last_column)
                 interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
-                                     mode='write', updatedcell=updatedcell)
-                logging.info('update spreadsheet in cell {}'.format(updatedcell))
+                                     mode='write', cell_address=cell_address)
+                logging.info('Update sheets in cell {}'.format(cell_address))
+    return 'OK'
 
+
+@activate_job.before_first_request
+def main():
+    def run_job():
+        while True:
+                logging.info('Server is woken by command')
+                check_spreadsheet()
+                logging.info('Server went to sleep')
+                time.sleep(300)
+    try:
+        thread = threading.Thread(target=run_job)
+        thread.start()
+    except KeyboardInterrupt:
+        exit(1)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    load_dotenv()
-    SHEETS_LINK = os.getenv("SHEETS_LINK")
-    SHEETS_RANGE = os.getenv("SHEETS_RANGE")
-    LOGIN_VK = os.getenv("LOGIN_VK")
-    PASSWORD_VK = os.getenv("PASSWORD_VK")
-    TOKEN_VK = os.getenv("TOKEN_VK")
-    GROUP_ID_VK = os.getenv("GROUP_ID_VK")
-    GROUP_ID_ALBUM_VK = os.getenv("GROUP_ID_ALBUM_VK")
-    TOKEN_TG = os.getenv("TOKEN_TG")
-    CHANNEL_TG = os.getenv("CHANNEL_TG")
-    TOKEN_FB = os.getenv("TOKEN_FB")
-    GROUP_ID_FB = os.getenv("GROUP_ID_FB")
+    main()
 
-    check_spreadsheet()
 
+    #check_spreadsheet()
 
     #print('https://docs.google.com/spreadsheets/d/1vX-iA5gAls4K1gYOCYasKXidAQ7vcCgkpgKbZi9OUk0/edit#gid=0')
 

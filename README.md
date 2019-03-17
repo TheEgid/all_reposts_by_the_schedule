@@ -57,19 +57,21 @@ python3 main.py
 
 ```
 INFO:googleapiclient.discovery:URL being requested: GET https://www.googleapis.com/drive=json
-INFO:root:It's not a good time - 2019-03-21 19:00:00
-INFO:root:It's time to publish - 2019-03-16 12:00:00
+INFO:root:It's not a good date & time - 2019-03-21 19:00:00
+INFO:root:It's date & time to publish - 2019-03-16 12:00:00
 INFO:root:download & saved content_folder/Темнота.txt
 INFO:root:download & saved content_folder/9341396273_8237029_8110393.jpg
 INFO:root: Success publish: facebook post was published
-INFO:root:It's not a good time - 2019-03-19 16:00:00
-INFO:root:It's not a good time - 2019-03-16 14:00:00
+INFO:root:It's not a good date & time - 2019-03-19 16:00:00
+INFO:root:It's not a good date & time - 2019-03-16 14:00:00
 ```
 
 После этого сообщения пост размещен -
 ```
 INFO:root: Success publish: facebook post was published
 ```
+
+3. остановка программы: **Ctrl-Pause/Break**  
 
 ### Цель проекта
 

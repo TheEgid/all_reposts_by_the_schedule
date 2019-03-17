@@ -2,11 +2,18 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from urllib.parse import parse_qsl
 from urlextract import URLExtract
+import argparse
 import logging
 import requests
 import os
 import re
 
+
+def get_args_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command', default="all", type=str,
+                        help='valid commands only: hh, sj, all')
+    return parser
 
 def create_google_color(r, g, b):
     red = 255-r
@@ -18,7 +25,7 @@ def create_google_color(r, g, b):
         green = 1.0
     if blue == 0:
         blue = 1.0
-    color = {"red": red, "green": green, "blue": blue}
+    color = {'red': red, 'green': green, 'blue': blue}
     return color
 
 
@@ -51,7 +58,6 @@ def save_files(url, filename, dir_name='content_folder/'):
 
 
 def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
-    logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.INFO)
     gauth = GoogleAuth()
     gauth.LoadCredentialsFile(credential_file)
     if gauth.credentials is None:
