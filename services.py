@@ -8,6 +8,20 @@ import os
 import re
 
 
+def create_google_color(r, g, b):
+    red = 255-r
+    green = 255-g
+    blue = 255-b
+    if red == 0:
+        red = 1.0
+    if green == 0:
+        green = 1.0
+    if blue == 0:
+        blue = 1.0
+    color = {"red": red, "green": green, "blue": blue}
+    return color
+
+
 def extract_google_spreadsheet_id(_string):
     regex = r'[^d/][A-Za-z0-9_-]{20,}'
     spreadsheet_id = re.findall(regex, _string)
@@ -36,10 +50,6 @@ def save_files(url, filename, dir_name='content_folder/'):
         logging.info('download & saved {}'.format(filepath))
 
 
-
-# https://github.com/MSF-Jarvis/pydrive-client/blob/master/main.py
-# http://qaru.site/questions/165781/automating-pydrive-verification-process
-
 def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
     logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.INFO)
     gauth = GoogleAuth()
@@ -52,17 +62,17 @@ def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
         gauth.Authorize()
     gauth.SaveCredentialsFile(credential_file)
     drive = GoogleDrive(gauth)
-    myfile = drive.CreateFile({'id': file_id})
-    myfile.FetchMetadata()
-    if myfile.metadata['mimeType'] == 'application/vnd.google-apps.document':
+    my_file = drive.CreateFile({'id': file_id})
+    my_file.FetchMetadata()
+    if my_file.metadata['mimeType'] == 'application/vnd.google-apps.document':
         metadata_dict = {
-            'file_link': myfile.metadata['exportLinks']['text/plain'],
-            'file_title': '{}.txt'.format(myfile.metadata['title'])
+            'file_link': my_file.metadata['exportLinks']['text/plain'],
+            'file_title': '{}.txt'.format(my_file.metadata['title'])
         }
-    elif myfile.metadata['mimeType'] == 'image/jpeg':
+    elif my_file.metadata['mimeType'] == 'image/jpeg':
         metadata_dict = {
-            'file_link': myfile.metadata['webContentLink'],
-            'file_title': myfile.metadata['title']
+            'file_link': my_file.metadata['webContentLink'],
+            'file_title': my_file.metadata['title']
         }
     else:
         return None

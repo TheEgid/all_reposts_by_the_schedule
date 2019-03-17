@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 import pickle
 import os.path
@@ -12,7 +11,7 @@ from services import get_file_metadata_from_gdrive
 from services import save_files
 from services import extract_google_spreadsheet_id
 from services import extract_file_id
-
+from services import create_google_color
 
 
 def interact_spreadsheet(link, range, mode='read', updatedcell=None):
@@ -40,63 +39,23 @@ def interact_spreadsheet(link, range, mode='read', updatedcell=None):
         return result.get('values', [])
 
     elif mode == 'write':
-        body = {'values': [['да']]}
+        row, column = updatedcell
         service = build('sheets', 'v4', credentials=creds)
-        service.spreadsheets().values().update(
-            spreadsheetId=spreadsheet_id, range=updatedcell,
-            valueInputOption='USER_ENTERED', body=body).execute()
+        requests = [{'repeatCell': {
+            'range': {'sheetId': 0, 'startRowIndex': row-1, 'endRowIndex': row,
+                      'startColumnIndex': column-1, 'endColumnIndex': column},
+            'cell': {'userEnteredValue': {'stringValue': 'да'},
+                     'userEnteredFormat': {
+                         'backgroundColor': create_google_color(217, 234, 211)}},
+            'fields': 'userEnteredValue,userEnteredFormat(backgroundColor)'}}]
+        body = {'requests': requests}
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=spreadsheet_id,body=body).execute()
 
-        # requests = [{
-        #     "repeatCell": {
-        #         "range": {
-        #             "sheetId": 0,
-        #             "startRowIndex": 0,
-        #             "endRowIndex": 1
-        #         },
-        #         "cell": {
-        #             "userEnteredValue": {
-        #                 "stringValue": 'string'
-        #             },
-        #             "userEnteredFormat": {
-        #                 "backgroundColor": {
-        #                     "red": 0.0,
-        #                     "green": 0.0,
-        #                     "blue": 0.0
-        #                 },
-        #                 "horizontalAlignment": "CENTER",
-        #                 "textFormat": {
-        #                     "foregroundColor": {
-        #                         "red": 1.0,
-        #                         "green": 1.0,
-        #                         "blue": 1.0
-        #                     },
-        #                     "fontSize": 12,
-        #                     "bold": True
-        #                 }
-        #             }
-        #         },
-        #         "fields": "userEnteredValue,userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)"
-        #     }
-        # }, {
-        #     "updateSheetProperties": {
-        #         "properties": {
-        #             "sheetId": 0
-        #         },
-        #         "fields": "gridProperties.frozenRowCount"
-        #     }
-        # }]
-        #
-        # body = {
-        #     'requests': requests
-        # }
-        #
-        # response = service.spreadsheets().batchUpdate(
-        #     spreadsheetId=spreadsheet_id,
-        #     body=body).execute()
 
 def check_publish_moment(publish_day, publish_time):
-    all_days = {'понедельник':0, 'вторник':1, 'среда':2, 'четверг':3,
-                'пятница':4, 'суббота':5, 'воскресенье':6}
+    all_days = {'понедельник': 0, 'вторник': 1, 'среда': 2, 'четверг': 3,
+                'пятница': 4, 'суббота': 5, 'воскресенье': 6}
     now = datetime.datetime.now()
     future_day = datetime.date(now.year, now.month, now.day)
     while future_day.weekday() != all_days[publish_day.lower()]:
@@ -116,16 +75,14 @@ def check_publish_moment(publish_day, publish_time):
 def check_spreadsheet():
     schedule_spreadsheet = interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
                                                 mode='read', updatedcell=None)
-    start_row_counter = 2
-    sheet_columns_amount = 8
-    sheet_columns_amount_letter = 'H'
-    sheets_name = SHEETS_RANGE.split('!')[0]
+    row_counter = 2
+    last_column = 8
     for schedule_row in schedule_spreadsheet:
-        if len(schedule_row) != sheet_columns_amount:
+        if len(schedule_row) != last_column:
              raise ValueError('Incorrect! Check the schedule spreadsheet!')
         flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, \
                                             non_published_flag = schedule_row
-        start_row_counter += 1
+        row_counter += 1
         if non_published_flag.lower() != "нет":
             pass
         else:
@@ -138,9 +95,7 @@ def check_spreadsheet():
                 for x in content_list:
                     save_files(x['file_link'], x['file_title'])
 
-                updatedcell = ''.join((sheets_name, "!",
-                                       sheet_columns_amount_letter,
-                                       str(start_row_counter)))
+                updatedcell = (row_counter, last_column)
                 interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
                                      mode='write', updatedcell=updatedcell)
                 logging.info('update spreadsheet in cell {}'.format(updatedcell))
@@ -165,5 +120,5 @@ if __name__ == '__main__':
     check_spreadsheet()
 
 
-    print('https://docs.google.com/spreadsheets/d/1vX-iA5gAls4K1gYOCYasKXidAQ7vcCgkpgKbZi9OUk0/edit#gid=0')
+    #print('https://docs.google.com/spreadsheets/d/1vX-iA5gAls4K1gYOCYasKXidAQ7vcCgkpgKbZi9OUk0/edit#gid=0')
 

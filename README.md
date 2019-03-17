@@ -66,13 +66,10 @@ INFO:root:It's not a good time - 2019-03-19 16:00:00
 INFO:root:It's not a good time - 2019-03-16 14:00:00
 ```
 
-
+После этого сообщения пост размещен -
 ```
-
 INFO:root: Success publish: facebook post was published
-
 ```
-После этого сообщения пост размещен.
 
 ### Цель проекта
 
