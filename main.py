@@ -12,30 +12,13 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from flask import Flask
 from services import get_file_metadata_from_gdrive
-from services import save_files
+from services import download_and_save_file
 from services import extract_google_spreadsheet_id
 from services import extract_file_id
 from services import create_google_color
 from publisher import post_telegram
 from publisher import post_facebook
 from publisher import post_vkontakte
-
-
-load_dotenv()
-SHEETS_LINK = os.getenv("SHEETS_LINK")
-SHEETS_RANGE = os.getenv("SHEETS_RANGE")
-LOGIN_VK = os.getenv("LOGIN_VK")
-PASSWORD_VK = os.getenv("PASSWORD_VK")
-TOKEN_VK = os.getenv("TOKEN_VK")
-GROUP_ID_VK = os.getenv("GROUP_ID_VK")
-GROUP_ID_ALBUM_VK = os.getenv("GROUP_ID_ALBUM_VK")
-TOKEN_TG = os.getenv("TOKEN_TG")
-CHANNEL_TG = os.getenv("CHANNEL_TG")
-TOKEN_FB = os.getenv("TOKEN_FB")
-GROUP_ID_FB = os.getenv("GROUP_ID_FB")
-
-logging.basicConfig(level=logging.INFO)
-activate_job = Flask(__name__)
 
 
 def post_all(file_number, flags):
@@ -46,20 +29,16 @@ def post_all(file_number, flags):
                        vk_group=GROUP_ID_VK,
                        vk_group_album=GROUP_ID_ALBUM_VK,
                        file_number=file_number)
-    else:
-        pass
+
     if flags['tg'] == 'да':
         post_telegram(token=TOKEN_TG,
                       tg_channel=CHANNEL_TG,
                       file_number=file_number)
-    else:
-        pass
+
     if flags['fb'] == 'да':
         post_facebook(token=TOKEN_FB,
                       fb_group=GROUP_ID_FB,
                       file_number=file_number)
-    else:
-        pass
 
 
 def interact_spreadsheet(link, range, mode='read', cell_address=None):
@@ -78,7 +57,7 @@ def interact_spreadsheet(link, range, mode='read', cell_address=None):
             creds = flow.run_local_server()
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
-    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
     if mode == 'read':
         service = build('sheets', 'v4', credentials=creds)
         sheet = service.spreadsheets()
@@ -113,24 +92,22 @@ def check_publish_moment(publish_day, publish_time):
             (now.month == publish_moment.month) and \
             (now.day == publish_moment.day) and \
             (now.hour == publish_moment.hour):
-        logging.info('It\'s date & time to publish - {}'.format(publish_moment))
+        logging.info(' It\'s date & time to publish - {}'.format(publish_moment))
         return True
     else:
-        logging.info('It\'s not a good date & time - {}'.format(publish_moment))
+        logging.info(' It\'s not a good date & time - {}'.format(publish_moment))
         return False
 
 
 def check_spreadsheet():
     schedule_spreadsheet = interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
                                                 mode='read', cell_address=None)
-    row_counter = 2
     last_column = 8
-    for schedule_row in schedule_spreadsheet:
+    for row_counter, schedule_row in enumerate(schedule_spreadsheet, start=2):
         if len(schedule_row) != last_column:
-             raise ValueError('Incorrect! Check the schedule spreadsheet!')
+             raise ValueError(' Incorrect! Check the schedule spreadsheet!')
         flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, \
                                             non_published_flag = schedule_row
-        row_counter += 1
         if non_published_flag.lower() != "нет":
             pass
         else:
@@ -142,7 +119,9 @@ def check_spreadsheet():
                 content_list = list(map(get_file_metadata_from_gdrive, all_content))
                 for x in content_list:
                     if x is not None:
-                        save_files(x['file_link'], x['file_title'], row_counter)
+                        download_and_save_file(x['file_link'],
+                                               x['file_title'],
+                                               row_counter)
 
                 post_all(row_counter, flags)
                 cell_address = (row_counter, last_column)
@@ -151,18 +130,19 @@ def check_spreadsheet():
                 for new_file in glob.glob('content_folder/*'):
                     os.remove(new_file)
 
-                logging.info('Update sheets in cell {}'.format(cell_address))
+                logging.info(' Update sheets in cell {}'.format(cell_address))
     return 'OK'
 
 
+activate_job = Flask(__name__)
 @activate_job.before_first_request
-def main():
+def start_flask_server(time_sleep):
     def run_job():
         while True:
-                logging.info('Server is woken by command')
+                logging.info(' Server is woken by command')
                 check_spreadsheet()
-                logging.info('Server went to sleep')
-                time.sleep(300)
+                logging.info(' Server went to sleep')
+                time.sleep(time_sleep)
     try:
         thread = threading.Thread(target=run_job)
         thread.start()
@@ -171,6 +151,22 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    load_dotenv()
+    SHEETS_LINK = os.getenv("SHEETS_LINK")
+    SHEETS_RANGE = os.getenv("SHEETS_RANGE")
+    LOGIN_VK = os.getenv("LOGIN_VK")
+    PASSWORD_VK = os.getenv("PASSWORD_VK")
+    TOKEN_VK = os.getenv("TOKEN_VK")
+    GROUP_ID_VK = os.getenv("GROUP_ID_VK")
+    GROUP_ID_ALBUM_VK = os.getenv("GROUP_ID_ALBUM_VK")
+    TOKEN_TG = os.getenv("TOKEN_TG")
+    CHANNEL_TG = os.getenv("CHANNEL_TG")
+    TOKEN_FB = os.getenv("TOKEN_FB")
+    GROUP_ID_FB = os.getenv("GROUP_ID_FB")
+
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
+
+    start_flask_server(time_sleep=300)
 
 

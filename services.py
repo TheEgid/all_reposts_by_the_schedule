@@ -47,15 +47,15 @@ def extract_file_id(text):
         return None
 
 
-def save_files(url, filename, number, dir_name='content_folder/'):
-    filepath = '{}{}.{}'.format(dir_name, str(number), filename.split('.')[1])
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+def download_and_save_file(url, filename, number, dir_name='content_folder'):
+    filepath = \
+        os.path.join(dir_name, str(number) + os.path.splitext(filename)[-1])
+    os.makedirs(dir_name, exist_ok=True)
     response = requests.get(url)
     response.raise_for_status()
     with open(filepath, 'wb') as f:
         f.write(response.content)
-        logging.info('download & saved {}'.format(filepath))
+        logging.info(' Downloaded & saved {}'.format(filepath))
 
 
 def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):

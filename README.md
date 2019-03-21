@@ -8,14 +8,11 @@
 
 Программа рассчитана для установки на постоянно работающем сервере.
 
-1. Следуя инструкции из https://developers.google.com/sheets/api/quickstart/python
-создаем API проект Google Spreadsheets. 
-**Enable the Google Sheets API**
-**Download Client Configuration**
-Сохранеям файл .json в папку all_reposts_by_the_schedule как client_secrets.json
-2. Создаем API проект Google Drive по ссылке https://console.developers.google.com/iam-admin/projects
-
-3. Скачиваем файлы в папку all_reposts_by_the_schedule. В этой же папке создаем .env файл. Ваш .env должен содержать строки:
+1. Создаем API проект Google Spreadsheets по инструкции https://developers.google.com/sheets/api/quickstart/python
+2. Включаем Google Sheets API в Google Developers Console (Нажимаем _Enable the Google Sheets API_).
+3. Нажимаем _Download Client Configuration_ - сохраняем файл .json в папку all_reposts_by_the_schedule как client_secrets.json
+4. Создаем API проект Google Drive по ссылке https://console.developers.google.com/iam-admin/projects
+5. Скачиваем файлы в папку all_reposts_by_the_schedule. В этой же папке создаем .env файл. Ваш .env должен содержать строки:
 
 ```
 SHEETS_LINK = url_адрес_вашей_таблицы
@@ -57,13 +54,13 @@ python3 main.py
 
 ```
 INFO:googleapiclient.discovery:URL being requested: GET https://www.googleapis.com/drive=json
-INFO:root:It's not a good date & time - 2019-03-21 19:00:00
-INFO:root:It's date & time to publish - 2019-03-16 12:00:00
-INFO:root:download & saved content_folder/Темнота.txt
-INFO:root:download & saved content_folder/9341396273_8237029_8110393.jpg
+INFO:root: It's not a good date & time - 2019-03-21 19:00:00
+INFO:root: It's date & time to publish - 2019-03-16 12:00:00
+INFO:root: Downloaded & saved content_folder/Темнота.txt
+INFO:root: Downloaded & saved content_folder/9341396273_8237029_8110393.jpg
 INFO:root: Success publish: facebook post was published
-INFO:root:It's not a good date & time - 2019-03-19 16:00:00
-INFO:root:It's not a good date & time - 2019-03-16 14:00:00
+INFO:root: It's not a good date & time - 2019-03-19 16:00:00
+INFO:root: It's not a good date & time - 2019-03-16 14:00:00
 ```
 
 После этого сообщения пост размещен -
