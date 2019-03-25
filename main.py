@@ -1,21 +1,18 @@
 from __future__ import print_function
-import pickle
 import glob
 import os.path
 import logging
 import datetime
 import threading
 import time
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from flask import Flask
 from services import get_file_metadata_from_gdrive
 from services import download_and_save_file
-from services import extract_google_spreadsheet_id
 from services import extract_file_id
-from services import create_google_color
+from services import read_spreadsheet_range
+from services import write_spreadsheet_cell
+from services import authorize_google_spreadsheets
 from publisher import post_telegram
 from publisher import post_facebook
 from publisher import post_vkontakte
@@ -29,55 +26,14 @@ def post_all(file_number, flags):
                        vk_group=GROUP_ID_VK,
                        vk_group_album=GROUP_ID_ALBUM_VK,
                        file_number=file_number)
-
     if flags['tg'] == 'да':
         post_telegram(token=TOKEN_TG,
                       tg_channel=CHANNEL_TG,
                       file_number=file_number)
-
     if flags['fb'] == 'да':
         post_facebook(token=TOKEN_FB,
                       fb_group=GROUP_ID_FB,
                       file_number=file_number)
-
-
-def interact_spreadsheet(link, range, mode='read', cell_address=None):
-    spreadsheet_id = extract_google_spreadsheet_id(link)
-    creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                scopes=["https://www.googleapis.com/auth/spreadsheets"],
-                client_secrets_file='client_secrets.json')
-            creds = flow.run_local_server()
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
-
-    if mode == 'read':
-        service = build('sheets', 'v4', credentials=creds)
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range,
-                                    valueRenderOption='FORMULA').execute()
-        return result.get('values', [])
-
-    if mode == 'write':
-        row, column = cell_address
-        service = build('sheets', 'v4', credentials=creds)
-        requests = [{'repeatCell': {
-            'range': {'sheetId': 0, 'startRowIndex': row-1, 'endRowIndex': row,
-                      'startColumnIndex': column-1, 'endColumnIndex': column},
-            'cell': {'userEnteredValue': {'stringValue': 'да'},
-                     'userEnteredFormat': {
-                         'backgroundColor': create_google_color(217, 234, 211)}},
-            'fields': 'userEnteredValue,userEnteredFormat(backgroundColor)'}}]
-        body = {'requests': requests}
-        service.spreadsheets().batchUpdate(
-            spreadsheetId=spreadsheet_id,body=body).execute()
 
 
 def check_publish_moment(publish_day, publish_time):
@@ -99,15 +55,16 @@ def check_publish_moment(publish_day, publish_time):
         return False
 
 
-def check_spreadsheet():
-    schedule_spreadsheet = interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
-                                                mode='read', cell_address=None)
-    last_column = 8
-    for row_counter, schedule_row in enumerate(schedule_spreadsheet, start=2):
-        if len(schedule_row) != last_column:
-             raise ValueError(' Incorrect! Check the schedule spreadsheet!')
+def check_spreadsheet(start_row=3):
+    service = authorize_google_spreadsheets()
+    schedule_spreadsheet = read_spreadsheet_range(service, SHEETS_LINK, SHEETS_RANGE)
+    last_column = len(schedule_spreadsheet[0])
+
+    for row_counter, schedule_row in enumerate(schedule_spreadsheet,
+                                               start=start_row):
         flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, \
-                                            non_published_flag = schedule_row
+        non_published_flag = schedule_row
+
         if non_published_flag.lower() != "нет":
             pass
         else:
@@ -117,21 +74,14 @@ def check_spreadsheet():
             publish_moment = check_publish_moment(publish_day, publish_time)
             if publish_moment:
                 content_list = list(map(get_file_metadata_from_gdrive, all_content))
-                for x in content_list:
-                    if x is not None:
-                        download_and_save_file(x['file_link'],
-                                               x['file_title'],
-                                               row_counter)
-
+                [download_and_save_file(x['file_link'], x['file_title'],
+                        row_counter) for x in content_list if x is not None]
                 post_all(row_counter, flags)
                 cell_address = (row_counter, last_column)
-                interact_spreadsheet(SHEETS_LINK, SHEETS_RANGE,
-                                     mode='write', cell_address=cell_address)
+                write_spreadsheet_cell(service, SHEETS_LINK, cell_address)
                 for new_file in glob.glob('content_folder/*'):
                     os.remove(new_file)
-
                 logging.info(' Update sheets in cell {}'.format(cell_address))
-    return 'OK'
 
 
 activate_job = Flask(__name__)
@@ -139,10 +89,10 @@ activate_job = Flask(__name__)
 def start_flask_server(time_sleep):
     def run_job():
         while True:
-                logging.info(' Server is woken by command')
-                check_spreadsheet()
-                logging.info(' Server went to sleep')
-                time.sleep(time_sleep)
+            logging.info(' Server is woken by command')
+            check_spreadsheet()
+            logging.info(' Server went to sleep')
+            time.sleep(time_sleep)
     try:
         thread = threading.Thread(target=run_job)
         thread.start()
@@ -166,7 +116,6 @@ if __name__ == '__main__':
 
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
     logging.basicConfig(level=logging.INFO)
-
     start_flask_server(time_sleep=300)
 
 

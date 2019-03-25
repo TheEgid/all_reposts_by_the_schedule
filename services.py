@@ -1,7 +1,11 @@
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from urllib.parse import parse_qsl
 from urlextract import URLExtract
+import pickle
 import argparse
 import logging
 import requests
@@ -87,3 +91,45 @@ def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
         else:
             return None
         return metadata_dict
+
+
+def authorize_google_spreadsheets():
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                scopes=["https://www.googleapis.com/auth/spreadsheets"],
+                client_secrets_file='client_secrets.json')
+            creds = flow.run_local_server()
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+    service = build('sheets', 'v4', credentials=creds)
+    return service
+
+
+def read_spreadsheet_range(service, link, range):
+    spreadsheet_id = extract_google_spreadsheet_id(link)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range,
+                                valueRenderOption='FORMULA').execute()
+    return result.get('values', [])
+
+
+def write_spreadsheet_cell(service, link, cell_address=None):
+    spreadsheet_id = extract_google_spreadsheet_id(link)
+    row, column = cell_address
+    requests = [{'repeatCell': {
+        'range': {'sheetId': 0, 'startRowIndex': row-1, 'endRowIndex': row,
+                  'startColumnIndex': column-1, 'endColumnIndex': column},
+        'cell': {'userEnteredValue': {'stringValue': 'да'}, #да
+                 'userEnteredFormat': {
+                     'backgroundColor': create_google_color(217, 234, 211)}},
+        'fields': 'userEnteredValue,userEnteredFormat(backgroundColor)'}}]
+    body = {'requests': requests}
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                                       body=body).execute()
