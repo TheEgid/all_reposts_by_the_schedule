@@ -3,6 +3,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+from pydrive.files import ApiRequestError
 from urllib.parse import parse_qsl
 from urlextract import URLExtract
 import pickle
@@ -39,8 +40,7 @@ def extract_google_spreadsheet_id(_string):
     spreadsheet_id = re.findall(regex, _string)
     if not spreadsheet_id:
         return None
-    else:
-        return spreadsheet_id[0]
+    return spreadsheet_id[0]
 
 
 def extract_file_id(text):
@@ -62,21 +62,9 @@ def download_and_save_file(url, filename, number, dir_name='content_folder'):
         logging.info(' Downloaded & saved {}'.format(filepath))
 
 
-def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
-    gauth = GoogleAuth()
-    gauth.LoadCredentialsFile(credential_file)
-    if gauth.credentials is None:
-        gauth.LocalWebserverAuth()
-    elif gauth.access_token_expired:
-        gauth.Refresh()
-    else:
-        gauth.Authorize()
-    gauth.SaveCredentialsFile(credential_file)
-    drive = GoogleDrive(gauth)
-    my_file = drive.CreateFile({'id': file_id})
-    if not file_id:
-        return None
-    else:
+def get_file_metadata_from_gdrive(service, file_id):
+    try:
+        my_file = service.CreateFile({'id': file_id})
         my_file.FetchMetadata()
         if my_file.metadata['mimeType'] == 'application/vnd.google-apps.document':
             metadata_dict = {
@@ -91,6 +79,22 @@ def get_file_metadata_from_gdrive(file_id, credential_file='mycreds.txt'):
         else:
             return None
         return metadata_dict
+    except ApiRequestError:
+        raise TypeError('wrong file_id')
+
+
+def authorize_google_drive(credential_file='mycreds.txt'):
+    gauth = GoogleAuth()
+    gauth.LoadCredentialsFile(credential_file)
+    if gauth.credentials is None:
+        gauth.LocalWebserverAuth()
+    elif gauth.access_token_expired:
+        gauth.Refresh()
+    else:
+        gauth.Authorize()
+    gauth.SaveCredentialsFile(credential_file)
+    drive_service = GoogleDrive(gauth)
+    return drive_service
 
 
 def authorize_google_spreadsheets():
