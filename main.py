@@ -56,6 +56,13 @@ def check_publish_moment(publish_day, publish_time):
         return False
 
 
+def select_already_published_flag(in_flag):
+    out_flag = False
+    if in_flag.lower() == "да":
+        out_flag = True
+    return out_flag
+
+
 def check_spreadsheet(spreadsheets_service, drive_service, start_row=3):
     schedule_spreadsheet = read_spreadsheet_range(spreadsheets_service,
                                                   SHEETS_LINK, SHEETS_RANGE)
@@ -63,37 +70,36 @@ def check_spreadsheet(spreadsheets_service, drive_service, start_row=3):
     for row_counter, schedule_row in enumerate(schedule_spreadsheet,
                                                start=start_row):
         flag_vk, flag_tg, flag_fb, publish_day, publish_time, txt_id, img_id, \
-        non_published_flag = schedule_row
+        published_flag = schedule_row
+        if select_already_published_flag(published_flag) is True:
+            continue
 
-        if non_published_flag.lower() != "нет":
-            pass
+        flags = {'vk': flag_vk, 'tg': flag_tg, 'fb': flag_fb}
+        all_content = [x if extract_file_id(x) is None else extract_file_id(x)
+                       for x in [txt_id, img_id]]
 
-        else:
-            flags = {'vk': flag_vk, 'tg': flag_tg, 'fb': flag_fb}
-            all_content = [x if extract_file_id(x) is None else extract_file_id(x)
-                           for x in [txt_id, img_id]]
+        publish_moment = check_publish_moment(publish_day, publish_time)
+        if publish_moment:
+            content_list = [get_file_metadata_from_gdrive(drive_service, x)
+                            for x in all_content]
 
-            publish_moment = check_publish_moment(publish_day, publish_time)
-            if publish_moment:
-                content_list = [get_file_metadata_from_gdrive(drive_service, x)
-                                for x in all_content]
+            [download_and_save_file(x['file_link'], x['file_title'],
+                                    row_counter) for x in content_list if x is not None]
 
-                [download_and_save_file(x['file_link'], x['file_title'],
-                                        row_counter) for x in content_list if x is not None]
-
-                post_all(row_counter, flags)
-                cell_address = (row_counter, last_column)
-                write_spreadsheet_cell(spreadsheets_service, SHEETS_LINK,
-                                       cell_address)
-                for new_file in glob.glob('content_folder/*'):
-                    os.remove(new_file)
-                logging.info(' Update sheets in cell {}'.format(cell_address))
+            post_all(row_counter, flags)
+            cell_address = (row_counter, last_column)
+            write_spreadsheet_cell(spreadsheets_service, SHEETS_LINK,
+                                   cell_address)
+            for new_file in glob.glob('content_folder/*'):
+                os.remove(new_file)
+            logging.info(' Update sheets in cell {}'.format(cell_address))
 
 
 activate_job = Flask(__name__)
 @activate_job.before_first_request
 def start_flask_server(time_sleep):
     def run_job():
+        # authorization at the time of server startup. Cycle authorization better??
         spreadsheets_service = authorize_google_spreadsheets()
         drive_service = authorize_google_drive()
         while True:
